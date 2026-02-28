@@ -1,1 +1,398 @@
 # ecoVidrio
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoVidrio León | Plataforma Ambiental</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root{
+--primary:#00f5c4;
+--secondary:#00d9ff;
+--glass:rgba(255,255,255,0.07);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+
+body{
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+}
+
+header{
+position:fixed;
+width:100%;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 8%;
+background:rgba(0,0,0,0.4);
+backdrop-filter:blur(15px);
+z-index:1000;
+}
+
+nav a{
+margin-left:25px;
+color:white;
+text-decoration:none;
+cursor:pointer;
+transition:0.3s;
+}
+
+nav a:hover{color:var(--primary);}
+
+section{padding:120px 8%;}
+
+.hero{
+min-height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+}
+
+.hero h1{
+font-size:clamp(2.5rem,5vw,4rem);
+background:linear-gradient(90deg,var(--primary),var(--secondary));
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.btn{
+padding:12px 30px;
+border-radius:30px;
+border:none;
+background:var(--primary);
+color:black;
+font-weight:bold;
+cursor:pointer;
+margin-top:20px;
+transition: 0.3s;
+}
+
+.btn:hover {
+transform: scale(1.05);
+box-shadow: 0 0 15px var(--primary);
+}
+
+.card{
+background:var(--glass);
+backdrop-filter:blur(20px);
+padding:30px;
+border-radius:20px;
+margin:20px 0;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+}
+
+/* --- GALERÍA ORGANIZADA --- */
+.galeria-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 25px;
+margin-top: 30px;
+}
+
+.media-item {
+border-radius: 20px;
+overflow: hidden;
+background: var(--glass);
+border: 1px solid rgba(255,255,255,0.1);
+transition: 0.3s;
+display: flex;
+flex-direction: column;
+}
+
+.media-item:hover {
+transform: translateY(-10px);
+box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.media-item img {
+width: 100%;
+height: 200px;
+object-fit: cover;
+}
+
+.video-container {
+position: relative;
+padding-bottom: 56.25%; 
+height: 0;
+overflow: hidden;
+}
+
+.video-container iframe {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+border: none;
+}
+
+.media-info {
+padding: 20px;
+flex-grow: 1;
+}
+
+.media-info h4 {
+color: var(--primary);
+margin-bottom: 5px;
+}
+/* -------------------------- */
+
+#map{
+height:500px;
+border-radius:20px;
+margin-top:20px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+border:none;
+background: rgba(255,255,255,0.9);
+}
+
+footer{
+text-align:center;
+padding:40px;
+background:black;
+margin-top:60px;
+}
+
+canvas{
+background:rgba(255,255,255,0.05);
+border-radius:20px;
+padding:20px;
+margin-top:30px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>EcoVidrio León</h2>
+<nav>
+<a onclick="scrollToSection('importancia')">Importancia</a>
+<a onclick="scrollToSection('dashboard')">Dashboard</a>
+<a onclick="scrollToSection('galeria')">Galería</a>
+<a onclick="scrollToSection('noticias')">Noticias</a>
+<a onclick="scrollToSection('mapa')">Mapa</a>
+<a onclick="scrollToSection('solicitud')">Solicitar</a>
+</nav>
+</header>
+
+<section class="hero">
+<h1>Recolección Inteligente de Vidrio en León, GTO</h1>
+<p>Economía circular para una ciudad sustentable</p>
+<button class="btn" onclick="scrollToSection('mapa')">Ver Centros</button>
+</section>
+
+<section id="importancia">
+<h2>Importancia del Reciclaje</h2>
+<div class="card">
+<p>
+• El vidrio es 100% reciclable infinitamente.<br><br>
+• Reciclar vidrio reduce hasta 30% el consumo energético.<br><br>
+• 1 tonelada reciclada evita aproximadamente 1 tonelada de CO₂.<br><br>
+• Disminuye extracción de recursos naturales.
+</p>
+</div>
+</section>
+
+<section id="dashboard">
+<h2>Dashboard Ambiental</h2>
+<div class="grid">
+<div class="card">
+<h3>Solicitudes</h3>
+<h1 id="totalSolicitudes">0</h1>
+</div>
+<div class="card">
+<h3>Kg recolectados</h3>
+<h1 id="kgRecolectados">0</h1>
+</div>
+<div class="card">
+<h3>CO₂ evitado (kg)</h3>
+<h1 id="co2Evitado">0</h1>
+</div>
+<div class="card">
+<h3>Puntos ecológicos</h3>
+<h1 id="puntosEco">0</h1>
+</div>
+</div>
+<h3 style="margin-top:50px;">Recolección Mensual (Simulación Realista)</h3>
+<canvas id="graficaMensual"></canvas>
+</section>
+
+<section id="galeria">
+    <h2>Evidencias y Proceso</h2>
+    <p>Conoce cómo transformamos el vidrio en León.</p>
+    
+    <div class="galeria-grid">
+        <div class="media-item">
+            <img src="https://www.meganoticias.mx/uploads/noticias/aumenta-recopilacion-de-residuos-electronicos-en-centros-de-acopio-226756.jpg" alt="Reciclaje de vidrio">
+            <div class="media-info">
+                <h4>Centro de Acopio</h4>
+                <p>Separación de envases por color en León.</p>
+            </div>
+        </div>
+
+        <div class="media-item">
+            <div class="video-container">
+                <iframe src="https://www.youtube.com/embed/UuZi4UH6UaU" title="YouTube video player" allowfullscreen></iframe>
+            </div>
+            <div class="media-info">
+                <h4>Proceso Industrial</h4>
+                <p>¿Cómo se funde el vidrio para ser reutilizado?</p>
+            </div>
+        </div>
+
+        <div class="media-item">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_ipDmN8J2eh-8RgitlMNuXjC43NrYdcWQ0Q&s" alt="Botellas recicladas">
+            <div class="media-info">
+                <h4>Materia Prima</h4>
+                <p>El calcín listo para entrar al horno.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="noticias">
+<h2>Noticias Ambientales</h2>
+<div class="card">
+<h3>SEMARNAT impulsa economía circular</h3>
+<p>La Secretaría de Medio Ambiente y Recursos Naturales promueve políticas para reducir residuos sólidos urbanos.</p>
+</div>
+<div class="card">
+<h3>INEGI reporta residuos en México</h3>
+<p>Datos oficiales muestran millones de toneladas de residuos generados anualmente en el país.</p>
+</div>
+<div class="card">
+<h3>Guanajuato fortalece cultura ambiental</h3>
+<p>Programas estatales promueven separación de residuos y reciclaje en municipios como León.</p>
+</div>
+</section>
+
+<section id="mapa">
+<h2>Centros de Recolección en León</h2>
+<div id="map"></div>
+</section>
+
+<section id="solicitud">
+<h2>Solicitar Recolección</h2>
+<div class="card">
+<input type="text" id="nombre" placeholder="Nombre">
+<input type="text" id="direccion" placeholder="Dirección">
+<input type="number" id="cantidad" placeholder="Kg aproximados">
+<button class="btn" onclick="registrarSolicitud()">Enviar</button>
+<p id="mensaje"></p>
+</div>
+</section>
+
+<footer>
+<p>© 2026 EcoVidrio León | Plataforma Ambiental</p>
+<div>
+<i class="fab fa-instagram"></i>
+<i class="fab fa-tiktok" style="margin-left:15px;"></i>
+</div>
+</footer>
+
+<script>
+function scrollToSection(id){
+document.getElementById(id).scrollIntoView({behavior:"smooth"});
+}
+
+/* DASHBOARD */
+let totalSolicitudes=0;
+let kgRecolectados=0;
+let puntos=0;
+
+function registrarSolicitud(){
+let nombre=document.getElementById("nombre").value.trim();
+let direccion=document.getElementById("direccion").value.trim();
+let cantidad=parseFloat(document.getElementById("cantidad").value);
+
+if(nombre===""||direccion===""||isNaN(cantidad)||cantidad<=0){
+alert("Completa todos los campos correctamente");
+return;
+}
+
+totalSolicitudes++;
+kgRecolectados+=cantidad;
+puntos+=Math.floor(cantidad/10);
+
+document.getElementById("totalSolicitudes").innerText=totalSolicitudes;
+document.getElementById("kgRecolectados").innerText=kgRecolectados.toFixed(1);
+document.getElementById("co2Evitado").innerText=kgRecolectados.toFixed(1);
+document.getElementById("puntosEco").innerText=puntos;
+
+document.getElementById("mensaje").innerHTML=
+"✅ Gracias "+nombre+". Has ganado "+Math.floor(cantidad/10)+" puntos ecológicos.";
+
+document.getElementById("nombre").value="";
+document.getElementById("direccion").value="";
+document.getElementById("cantidad").value="";
+}
+
+/* GRÁFICA */
+new Chart(document.getElementById("graficaMensual"), {
+type: 'line',
+data: {
+labels: ['Enero','Febrero','Marzo','Abril','Mayo','Junio'],
+datasets: [{
+label: 'Kg de vidrio recolectado',
+data: [320,410,580,760,890,1020],
+borderColor: '#00f5c4',
+backgroundColor: 'rgba(0,245,196,0.2)',
+tension:0.4,
+fill:true
+}]
+},
+options:{
+plugins:{legend:{labels:{color:"white"}}},
+scales:{
+x:{ticks:{color:"white"}},
+y:{ticks:{color:"white"}}
+}
+}
+});
+
+/* MAPA */
+let map=L.map('map').setView([21.152639,-101.711598],13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+let centros=[
+[21.152639,-101.711598,"Zona Centro"],
+[21.142400,-101.678200,"Parque Explora"],
+[21.124500,-101.690300,"Zona Sur"]
+];
+
+centros.forEach(c=>{
+L.marker([c[0],c[1]]).addTo(map)
+.bindPopup("<b>"+c[2]+"</b><br>Punto de recolección");
+});
+</script>
+
+</body>
+</html>
+
